@@ -1,4 +1,4 @@
 # Fkdm
 Simple yet super fast Download Manager
 
-![Alt text](<Screenshot 2023-09-16 at 23.57.53.png>)
+![Alt text](<img/Screenshot 2023-09-17 at 02.58.13.png>)

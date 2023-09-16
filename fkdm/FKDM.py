@@ -1,16 +1,18 @@
 import os
-import typing
-from PyQt5 import QtCore
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QWidget,QPushButton,QLineEdit,QVBoxLayout,QApplication,QMainWindow,QFileDialog,QProgressBar,QStatusBar
 import sys
 from qtawesome import icon
 import pycurl
-import io
 from sys import stderr as STREAM
 
+if __package__ is None:
+    path = os.path.realpath(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.dirname(path))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
+    
+    __package__ = 'fkdm'
+    import fkdm
 
 kb = 1024
 
@@ -26,7 +28,7 @@ class FkdmApp(QMainWindow):
 
     
     def initUI(self):
-        self.setWindowTitle("Fkdm - Simple yet Powerful superfast download manager")
+        self.setWindowTitle("Fkdm - Free yet simple and very fast downloader manager")
         self.setGeometry(100, 100, 600, 200)
 
         main_widget = QWidget()
@@ -126,11 +128,12 @@ class FkdmApp(QMainWindow):
 
     
 
-    
-
-
-if __name__ == '__main__':
+def runApp():
     app = QApplication(sys.argv)
     fkdm = FkdmApp()
     fkdm.show()
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    runApp()

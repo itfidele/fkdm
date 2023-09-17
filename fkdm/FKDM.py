@@ -1,10 +1,14 @@
 import os
+import typing
+from PyQt5 import QtCore
 from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QWidget,QPushButton,QLineEdit,QVBoxLayout,QApplication,QMainWindow,QFileDialog,QProgressBar,QStatusBar
+from PyQt5.QtWidgets import QWidget,QPushButton,QLineEdit,QVBoxLayout,QApplication,QMainWindow,QFileDialog,QProgressBar,QStatusBar,QDialog
 import sys
 from qtawesome import icon
 import pycurl
 from sys import stderr as STREAM
+
+from dialogs.settings import SettingsDialog
 
 if __package__ is None:
     path = os.path.realpath(os.path.abspath(__file__))
@@ -36,7 +40,14 @@ class FkdmApp(QMainWindow):
 
         # URL textfield
         main_layout = QVBoxLayout(main_widget)
-        
+
+        # sidebar layout
+        sidebar_layout = QVBoxLayout(main_widget)
+        setting_icon = icon("fa.cog",color="black")
+        setting_button = QPushButton(setting_icon,"Settings",self)
+        setting_button.clicked.connect(self.show_settings)
+        sidebar_layout.addWidget(setting_button)
+
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("Enter URL text...")
         main_layout.addWidget(self.url_input)
@@ -66,6 +77,10 @@ class FkdmApp(QMainWindow):
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready")
     
+
+    def show_settings(self):
+        settings_dialog = SettingsDialog(self)
+        settings_dialog.show()
 
     def get_valid_name(self,url):
         file_name = url.split("/")[-1]
@@ -126,6 +141,10 @@ class FkdmApp(QMainWindow):
     def status_download_progress(self, download_t, download_d, upload_t, upload_d):
         self.status_bar.showMessage(f"Downloading {download_d} of {download_t} bytes")
 
+
+
+    
+    
     
 
 def runApp():

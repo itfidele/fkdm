@@ -6,19 +6,17 @@ from PyQt5.QtWidgets import QWidget,QPushButton,QLineEdit,QVBoxLayout,QApplicati
 import sys
 from qtawesome import icon
 import pycurl
-from sys import stderr as STREAM
-
-from dialogs.settings import SettingsDialog
-
-if __package__ is None:
-    path = os.path.realpath(os.path.abspath(__file__))
-    sys.path.insert(0, os.path.dirname(path))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
-    
-    __package__ = 'fkdm'
-    import fkdm
+import io
+from fkdm.config.styles import global_styles
+from fkdm.dialogs.settings import SettingsDialog
+from io import BytesIO
+from fkdm.config import settings
 
 kb = 1024
+
+pycurl_custom_headers = [
+    f"User-Agent: {settings.DEFAULT_USER_AGENT}",
+]
 
 
 class FkdmApp(QMainWindow):
@@ -41,15 +39,11 @@ class FkdmApp(QMainWindow):
         # URL textfield
         main_layout = QVBoxLayout(main_widget)
 
-        # sidebar layout
-        sidebar_layout = QVBoxLayout(main_widget)
-        setting_icon = icon("fa.cog",color="black")
-        setting_button = QPushButton(setting_icon,"Settings",self)
-        setting_button.clicked.connect(self.show_settings)
-        sidebar_layout.addWidget(setting_button)
+        
 
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("Enter URL text...")
+        self.setStyleSheet(global_styles)
         main_layout.addWidget(self.url_input)
         self.save_directory_input = QLineEdit()
         self.save_directory_input.setReadOnly(True)
@@ -94,11 +88,14 @@ class FkdmApp(QMainWindow):
         return file_name
     
 
-    def update_progress(self,total,current,_,__):
-        if total > 0:
-            progress = int((current/total)*100)
-            self.progress_bar.setValue(progress)
-            self.status_bar.showMessage(f"Downloading {progress}%")
+
+    def progress_callback(self,download_total, downloaded, upload_total, uploaded):
+        
+        if downloaded == download_total:
+            print("Download is 100% complete")
+        
+        print(downloaded,download_total)
+        return 0
 
 
     def browse_location(self):
@@ -108,11 +105,12 @@ class FkdmApp(QMainWindow):
             self.save_directory_input.setText(folder_path)
 
     def download_file(self):
+        print("Download button clicked")
         self.settings.setValue("save_location",self.save_directory_input.text())
         self.settings.sync()
         url = self.url_input.text()
         save_location = self.save_directory_input.text()
-
+        buffer = BytesIO()
         if not url:
             return
 
@@ -120,26 +118,32 @@ class FkdmApp(QMainWindow):
 
         file_name = self.get_valid_name(url)
         file_path = os.path.join(save_location, file_name)
-
+        
         try:
+            
+            curl = pycurl.Curl()
+            curl.setopt(pycurl.URL, url)
+            curl.setopt(pycurl.PROGRESSFUNCTION, self.progress_callback)
+            curl.setopt(pycurl.XFERINFOFUNCTION, self.status_download_progress)
+            curl.setopt(pycurl.FOLLOWLOCATION, True)
+            curl.setopt(pycurl.NOPROGRESS, 0)
             with open(file_path, 'wb') as file:
-                curl = pycurl.Curl()
-                curl.setopt(curl.URL, url)
-                curl.setopt(curl.WRITEDATA, file)
-                curl.setopt(curl.FOLLOWLOCATION, 1)
-                curl.setopt(curl.NOPROGRESS, False)
-                curl.setopt(curl.XFERINFOFUNCTION, self.status_download_progress)
-                curl.setopt(curl.PROGRESSFUNCTION, self.update_progress)
+                curl.setopt(pycurl.WRITEFUNCTION, file.write)
+                curl.setopt(pycurl.HTTPHEADER, pycurl_custom_headers)
                 curl.perform()
-                curl.close()
-            self.progress_bar.setValue(100)
-            self.status_bar.showMessage("Download completed")
-            self.url_input.setText("")
+                print('Status: %d' % curl.getinfo(curl.RESPONSE_CODE))
+
+            curl.close()
+                
+                
+            print(f"Downloaded file to '{file_path}' successfully.")
         except Exception as e:
             print(f"Error downloading file: {e}")
 
+
     def status_download_progress(self, download_t, download_d, upload_t, upload_d):
-        self.status_bar.showMessage(f"Downloading {download_d} of {download_t} bytes")
+        #print(f"Downloaded {download_d} of {download_t} bytes")
+        self.status_bar.showMessage(f"Downloading {round(download_d/kb,1)} kb of {download_t} bytes")
 
 
 

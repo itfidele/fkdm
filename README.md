@@ -4,5 +4,6 @@ Simple yet super fast Download Manager
 
 ## Requirements
 - Python 3.6 (must)
+- Only works on Linux based operating systems
 
 

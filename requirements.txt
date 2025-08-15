@@ -2,3 +2,6 @@ pyqt5
 qtawesome
 notify-py
 pycurl
+yt-dlp
+requests
+pillow
